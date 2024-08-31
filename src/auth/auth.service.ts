@@ -21,7 +21,7 @@ export class AuthService {
     private readonly refreshService: RefreshTokenService,
     private readonly otpService: OtpService,
     private readonly emailService: EmailService
-  ) {}
+  ) { }
 
   async register(createUserDto: RegisterDto): Promise<User> {
     try {
@@ -61,19 +61,19 @@ export class AuthService {
     }
   }
 
-  async signIn(createLoginDto: LoginDto): Promise<{ access_token: string; refresh_token: string }> {
+  async signIn(createLoginDto: LoginDto): Promise<{ accessToken: string; refreshToken: string }> {
     try {
       const user = await this.userRepository.signin(createLoginDto);
-      console.log(user);
+      // console.log(user);
       console.log('salom');
-  
+
       const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
       const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
 
       if (!accessTokenSecret || !refreshTokenSecret) {
         throw new InternalServerErrorException('JWT secret not configured');
       }
-  
+
       const payload = { sub: user.id.toString(), email: user.email };
       const accessToken = this.jwtService.sign(payload, {
         secret: accessTokenSecret,
@@ -83,27 +83,52 @@ export class AuthService {
         secret: refreshTokenSecret,
         expiresIn: process.env.REFRESH_EXPIRES_IN || '7d', // default to 7 days if not set
       });
-  
+
       await this.refreshService.storeRefreshToken(refreshToken, user);
-  
+
       return {
-        access_token: accessToken,
-        refresh_token: refreshToken,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
       };
     } catch (error) {
       console.error(`Sign-in failed: ${error.message}`);
       throw new UnauthorizedException('Invalid credentials');
     }
   }
+  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
+    // console.log(`Received refresh token: ${refreshToken}`);
+    console.log(refreshToken);
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token must be provided');
+    }
+    // console.log(refreshToken);
+    
 
-  async refreshAccessToken(refreshToken: string): Promise<{ access_token: string }> {
+    const tokenData = await this.refreshService.findOne({
+      where: { token: refreshToken },
+      relations: ['user'],
+    });
+
+    if (!tokenData) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
     try {
-      return this.refreshService.refreshAccessToken(refreshToken);
+      this.jwtService.verify(refreshToken, { secret: process.env.REFRESH_TOKEN_SECRET });
+
+      const newAccessToken = this.jwtService.sign(
+        { sub: tokenData.user.id, email: tokenData.user.email },
+        { secret: process.env.ACCESS_TOKEN_SECRET, expiresIn: process.env.ACCESS_EXPIRES_IN },
+      );
+
+      return { accessToken: newAccessToken };
     } catch (error) {
-      console.error(`Token refresh failed: ${error.message}`);
+      console.error(`Error in refreshAccessToken: ${error.message}`);
       throw new UnauthorizedException('Failed to refresh access token');
     }
   }
+
+
 
   async me(id: string): Promise<User> {
     try {

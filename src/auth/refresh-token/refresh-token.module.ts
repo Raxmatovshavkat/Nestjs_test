@@ -5,12 +5,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { RefreshTokenService } from './refresh-token.service';
 import { RefreshToken } from './entities/refresh-token.entity';
 import * as dotenv from 'dotenv';
+import { User } from 'src/user/entities/user.entity';
 
 dotenv.config();
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RefreshToken]),
+    TypeOrmModule.forFeature([RefreshToken,User]),
     JwtModule.register({}),
   ],
   providers: [RefreshTokenService],

@@ -5,7 +5,6 @@ import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { User } from 'src/user/entities/user.entity';
 
-
 @Injectable()
 export class RefreshTokenService {
   constructor(
@@ -14,7 +13,7 @@ export class RefreshTokenService {
     private readonly jwtService: JwtService,
   ) { }
 
-  async storeRefreshToken(token: string, user: User) {
+  async storeRefreshToken(token: any, user: User) {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + 7);
 
@@ -26,23 +25,33 @@ export class RefreshTokenService {
     return this.refreshTokenRepository.save(refreshToken);
   }
 
-  async refreshAccessToken(refreshToken: string): Promise<{ access_token: string }> {
-    const tokenData = await this.refreshTokenRepository.findOne({
+  async findOne(criteria: any): Promise<RefreshToken | null> {
+    return this.refreshTokenRepository.findOne({
+      where: criteria.where,
+      relations: criteria.relations,
+    });
+  }
+
+  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
+    const tokenData = await this.findOne({
       where: { token: refreshToken },
       relations: ['user'],
     });
+    // console.log(tokenData);
+    
 
     if (!tokenData) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const payload = this.jwtService.verify(refreshToken, { secret: process.env.DATABASE_ACCESS_TOKEN_SECRET });
+    this.jwtService.verify(refreshToken, { secret: process.env.REFRESH_TOKEN_SECRET });
+
     const newAccessToken = this.jwtService.sign(
       { sub: tokenData.user.id, email: tokenData.user.email },
-      { secret: process.env.DATABASE_ACCESS_TOKEN_SECRET, expiresIn: process.env.ACCES_EXPIRES_IN },
+      { secret: process.env.ACCESS_TOKEN_SECRET, expiresIn: process.env.ACCESS_EXPIRES_IN },
     );
 
-    return { access_token: newAccessToken };
+    return { accessToken: newAccessToken };
   }
 
   async removeTokensForUser(user: User): Promise<void> {

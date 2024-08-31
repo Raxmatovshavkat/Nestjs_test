@@ -1,8 +1,9 @@
 import { Controller, Post, Body, Get, Param, Patch, Delete, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { RegisterDto } from './dto/user-register.dto';
 import { LoginDto } from './dto/user-login.dto';
+import { RefreshTokenDto } from './refresh-token/dto/create-refresh-token.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -40,18 +41,22 @@ export class AuthController {
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
+  @ApiBody({ type: RefreshTokenDto }) // Use the correct DTO here
   @ApiResponse({ status: 200, description: 'Access token refreshed successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid refresh token.' })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
-  async refreshAccessToken(@Body('refresh_token') refreshToken: string) {
+  async refreshAccessToken(@Body() refreshTokenDto: RefreshTokenDto) {
     try {
-      const accessToken = await this.authService.refreshAccessToken(refreshToken);
-      return { access_token: accessToken.access_token };
+      // console.log('Received refresh token DTO:', refreshTokenDto); // Debugging
+      const accessToken = await this.authService.refreshAccessToken(refreshTokenDto.token);
+      return { access_token: accessToken.accessToken };
     } catch (error) {
       console.error(`Refresh token error: ${error.message}`);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
+  
+
 
   @Get('me/:id')
   @ApiOperation({ summary: 'Get current user by ID' })
