@@ -1,12 +1,14 @@
 // src/user-course/user-course.controller.ts
-import { Controller, Get, Post, Body, Delete, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Param, UseGuards } from '@nestjs/common';
 import { UserCourseService } from './user-course.service';
 import { CreateUserCourseDto } from './dto/create-user-course.dto';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserCourse } from './entities/user-course.entity';
+import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 
 @ApiTags('user-course')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('user-course')
 export class UserCourseController {
   constructor(private readonly userCourseService: UserCourseService) {}
