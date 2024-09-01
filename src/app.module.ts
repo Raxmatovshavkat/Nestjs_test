@@ -6,7 +6,7 @@ import { UserCourseModule } from './user-course/user-course.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { databaseConfig } from './config/db';
-import { File } from './files/entities/file.entity';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
@@ -21,7 +21,7 @@ import { File } from './files/entities/file.entity';
     UserCourseModule,
     UserModule,
     AuthModule,
-    File, 
+    FilesModule, 
   ],
   controllers: [],
   providers: [],
