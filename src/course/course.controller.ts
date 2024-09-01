@@ -6,7 +6,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guard/jwt.guard';
 
 @ApiTags('courses')
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('courses')
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}

@@ -1,9 +1,12 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, Delete, UnauthorizedException, InternalServerErrorException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { RegisterDto } from './dto/user-register.dto';
 import { LoginDto } from './dto/user-login.dto';
 import { RefreshTokenDto } from './refresh-token/dto/create-refresh-token.dto';
+import { Roles } from './guard/roles.decorator';
+import { JwtAuthGuard } from './guard/jwt.guard';
+import { RolesGuard } from './guard/roles.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -41,7 +44,7 @@ export class AuthController {
 
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
-  @ApiBody({ type: RefreshTokenDto }) // Use the correct DTO here
+  @ApiBody({ type: RefreshTokenDto }) 
   @ApiResponse({ status: 200, description: 'Access token refreshed successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid refresh token.' })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
@@ -72,7 +75,8 @@ export class AuthController {
       throw new UnauthorizedException('User not found');
     }
   }
-
+  @Roles("admin")
+  @UseGuards(JwtAuthGuard,RolesGuard)
   @Delete('logout/:userId')
   @ApiOperation({ summary: 'Logout a user and remove refresh tokens' })
   @ApiResponse({ status: 200, description: 'User logged out successfully.' })
